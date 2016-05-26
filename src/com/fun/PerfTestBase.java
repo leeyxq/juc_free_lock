@@ -32,4 +32,9 @@ public abstract class PerfTestBase {
 	 * @return
 	 */
 	protected abstract long getWaitTime();
+	
+	protected void doSomething(){
+	    long i = 100L*1000L;
+		while(i-->0);
+	}
 }

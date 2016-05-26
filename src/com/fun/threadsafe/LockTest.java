@@ -13,11 +13,21 @@ import com.fun.PerfTestBase;
  */
 public class LockTest extends PerfTestBase {
 	private Long ITERATIONS = 0L;
+
 	private ReentrantLock lock = new ReentrantLock();
 	private Object lock2 = new Object();
 
+	long initIterations = 100 * 1000 * 1000L;
+	int concurrentCount = 5;
+
+	public LockTest(int concurrentCount, long initIterations) {
+		this.initIterations = initIterations;
+		this.concurrentCount = concurrentCount;
+	}
+
 	synchronized long saleTicket() {
 		if (ITERATIONS > 0) {
+			doSomething();
 			return ITERATIONS--;
 		} else {
 			return -1;
@@ -49,12 +59,11 @@ public class LockTest extends PerfTestBase {
 
 	@Override
 	protected long run() {
-		ITERATIONS = 100 * 1000 * 1000L;
-//		ITERATIONS = 10000L;
+		ITERATIONS = initIterations;
 		long opsSenconds = 0;
-		final CyclicBarrier cyclicBarrier = new CyclicBarrier(5);
-		// two sale ticket threads
-		for (int i = 0; i < 4; i++) {
+		final CyclicBarrier cyclicBarrier = new CyclicBarrier(concurrentCount + 1);
+		// n sale ticket threads
+		for (int i = 0; i < concurrentCount; i++) {
 			new Thread(new Runnable() {
 				@Override
 				public void run() {
@@ -62,7 +71,7 @@ public class LockTest extends PerfTestBase {
 						cyclicBarrier.await();
 						long ticket = -1;
 						while ((ticket = saleTicket()) > 0) {
-							//System.out.printf("%s---sale ticket:%,d\n", Thread.currentThread().getName(), ticket);
+							// System.out.printf("%s---sale ticket:%,d\n", Thread.currentThread().getName(), ticket);
 						}
 						System.out.printf("%s--sale ticket is done:%,d\n", Thread.currentThread().getName(), ticket);
 						cyclicBarrier.await();
@@ -70,7 +79,7 @@ public class LockTest extends PerfTestBase {
 						e.printStackTrace();
 					}
 				}
-			},"thread"+i).start();
+			}, "thread" + i).start();
 		}
 
 		try {
@@ -91,6 +100,14 @@ public class LockTest extends PerfTestBase {
 	}
 
 	public static void main(String[] args) {
-		new LockTest().runTests();
+		long initIterations = 100 * 1000 * 1000L;
+		int concurrentCount = 5;
+		if (args.length > 0) {
+			concurrentCount = Integer.parseInt(args[0]);
+			if (args.length > 1) {
+				initIterations = Long.parseLong(args[1]);
+			}
+		}
+		new LockTest(concurrentCount, initIterations).runTests();
 	}
 }
